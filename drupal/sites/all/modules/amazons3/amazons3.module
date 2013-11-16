@@ -177,14 +177,16 @@ function amazons3_admin_validate($form, &$form_state) {
 }
 
 function amazons3_image_style_flush($style) {
-  // Empty cached data that contains information about the style.
-  if(isset($style->old_name) && strlen($style->old_name) > 0) {
-    drupal_rmdir('s3://styles/' . $style->old_name);
-  }
-  if(isset($style->name) && strlen($style->name) > 0) {
-    drupal_rmdir('s3://styles/' . $style->name);
+  foreach (array('name', 'old_name') as $key) {
+    if (!empty($style[$key])) {
+      $prefix = 's3://styles/' . $style[$key];
+      db_delete('amazons3_file')
+        ->condition('uri', db_like($prefix) . '%', 'LIKE')
+        ->execute();
+    }
   }
 }
+
 /**
  * Submit callback; clear file metadata cache.
  *
